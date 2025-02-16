@@ -26,6 +26,8 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.bukkit.util.PaperInterop;
 import com.sk89q.worldguard.session.MoveType;
 import com.sk89q.worldguard.session.Session;
+import io.github.projectunified.minelib.scheduler.common.util.Platform;
+import io.github.projectunified.minelib.scheduler.entity.EntityScheduler;
 import io.papermc.lib.PaperLib;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -135,19 +137,8 @@ public class PlayerMoveListener extends AbstractListener {
                 Location playerDismountLocation = override.clone().add(0, 1, 0);
                 teleport(player, playerDismountLocation);
 
-
                 Location delayedDismountLocation = override.clone().add(0, 1, 0);
-                Runnable task = () -> teleport(player, delayedDismountLocation);
-                if (getPlugin().isFolia()) {
-                    player.getScheduler().runDelayed(getPlugin(), new Consumer() {
-                        @Override
-                        public void accept(Object ignored) {
-                            task.run();
-                        }
-                    }, null, 1);
-                } else {
-                    Bukkit.getScheduler().runTaskLater(getPlugin(), task, 1);
-                }
+                EntityScheduler.get(getPlugin(), player).runLater(() -> teleport(player, delayedDismountLocation), 1);
             }
         }
     }

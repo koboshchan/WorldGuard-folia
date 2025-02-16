@@ -24,7 +24,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.sk89q.worldedit.util.report.DataReport;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import io.github.projectunified.minelib.scheduler.common.util.Platform;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -52,8 +52,9 @@ public class SchedulerReport extends DataReport {
 
     public SchedulerReport() {
         super("Scheduler");
-        if (WorldGuardPlugin.inst().isFolia()) {
-            return; // Todo Add support Schedulers
+        if (Platform.FOLIA.isPlatform()) {
+            append("Error", "MODDED FOLIA VERSION - DO NOT REPORT TO WORLDGUARD");
+            return;
         }
 
         List<BukkitTask> tasks = Bukkit.getServer().getScheduler().getPendingTasks();

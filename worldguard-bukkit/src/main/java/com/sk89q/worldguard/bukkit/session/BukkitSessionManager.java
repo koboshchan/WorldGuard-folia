@@ -28,6 +28,8 @@ import com.sk89q.worldguard.bukkit.event.player.ProcessPlayerEvent;
 import com.sk89q.worldguard.bukkit.util.Entities;
 import com.sk89q.worldguard.session.AbstractSessionManager;
 import com.sk89q.worldguard.session.Session;
+import io.github.projectunified.minelib.scheduler.common.util.Platform;
+import io.github.projectunified.minelib.scheduler.entity.EntityScheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -81,19 +83,12 @@ public class BukkitSessionManager extends AbstractSessionManager implements Runn
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void run() {
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-            Runnable task = () -> {
-                LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
-                get(localPlayer).tick(localPlayer);
-            };
-            if (WorldGuardPlugin.inst().isFolia()) {
-                player.getScheduler().run(WorldGuardPlugin.inst(), new Consumer() {
-                    @Override
-                    public void accept(Object ignored) {
-                        task.run();
-                    }
-                }, null);
+            LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
+            Runnable runnable = () -> get(localPlayer).tick(localPlayer);
+            if (Platform.FOLIA.isPlatform()) {
+                EntityScheduler.get(WorldGuardPlugin.inst(), player).run(runnable);
             } else {
-                task.run();
+                runnable.run();
             }
         }
     }
