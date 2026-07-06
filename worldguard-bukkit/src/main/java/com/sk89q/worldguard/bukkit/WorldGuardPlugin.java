@@ -76,6 +76,9 @@ import com.sk89q.worldguard.protection.managers.storage.file.DirectoryYamlDriver
 import com.sk89q.worldguard.protection.managers.storage.sql.SQLDriver;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.util.logging.RecordMessagePrefixer;
+import io.github.projectunified.minelib.scheduler.canceller.TaskCanceller;
+import io.github.projectunified.minelib.scheduler.entity.EntityScheduler;
+import io.github.projectunified.minelib.scheduler.global.GlobalScheduler;
 import io.papermc.lib.PaperLib;
 import io.papermc.paper.ServerBuildInfo;
 import org.bstats.bukkit.Metrics;
@@ -170,16 +173,7 @@ public class WorldGuardPlugin extends JavaPlugin {
             reg.register(GeneralCommands.class);
         }
 
-        if (this.isFolia()) {
-            getServer().getGlobalRegionScheduler().runAtFixedRate(this, new Consumer() {
-                @Override
-                public void accept(Object ignored) {
-                    sessionManager.run();
-                }
-            }, BukkitSessionManager.RUN_DELAY, BukkitSessionManager.RUN_DELAY);
-        } else {
-            getServer().getScheduler().scheduleSyncRepeatingTask(this, sessionManager, BukkitSessionManager.RUN_DELAY, BukkitSessionManager.RUN_DELAY);
-        }
+        GlobalScheduler.get(this).runTimer(sessionManager, BukkitSessionManager.RUN_DELAY, BukkitSessionManager.RUN_DELAY);
 
         // Register events
         getServer().getPluginManager().registerEvents(sessionManager, this);
@@ -220,24 +214,14 @@ public class WorldGuardPlugin extends JavaPlugin {
         }
         worldListener.registerEvents();
 
-        if (this.isFolia()) {
+        GlobalScheduler.get(this).run(() -> {
             for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-                player.getScheduler().run(this, new Consumer() {
-                    @Override
-                    public void accept(Object ignored) {
-                        ProcessPlayerEvent event = new ProcessPlayerEvent(player);
-                        Events.fire(event);
-                    }
-                }, null);
-            }
-        } else {
-            Bukkit.getScheduler().runTask(this, () -> {
-                for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+                EntityScheduler.get(this, player).run(() -> {
                     ProcessPlayerEvent event = new ProcessPlayerEvent(player);
                     Events.fire(event);
-                }
-            });
-        }
+                });
+            }
+        });
 
         ((SimpleFlagRegistry) WorldGuard.getInstance().getFlagRegistry()).setInitialized(true);
 
@@ -292,12 +276,7 @@ public class WorldGuardPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         WorldGuard.getInstance().disable();
-        if (this.isFolia()) {
-            this.getServer().getGlobalRegionScheduler().cancelTasks(this);
-            this.getServer().getAsyncScheduler().cancelTasks(this);
-        } else {
-            this.getServer().getScheduler().cancelTasks(this);
-        }
+        TaskCanceller.get(this).cancelAll();
     }
 
     @Override
