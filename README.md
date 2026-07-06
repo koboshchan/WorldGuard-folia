@@ -1,3 +1,7 @@
+# WorldGuard-Folia
+
+This is a fork of WorldGuard that is compatible with Folia. It is maintained by the community and is not officially supported by EngineHub.
+
 <h1>
     <img src="worldguard-logo.svg" alt="WorldGuard" width="400" /> 
 </h1>
